@@ -1,0 +1,10 @@
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+*.user
+*.csproj
+*.sln
+*.slnx
+.vs/
+.idea/

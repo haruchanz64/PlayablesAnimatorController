@@ -1,0 +1,29 @@
+{
+  "name": "com.haruchanz64.playables-animator-controller",
+  "version": "1.0.0",
+  "displayName": "PlayablesAnimatorController",
+  "description": "Code-driven 2D and 3D animation controller for Unity 6 built on the Playables API without AnimatorController state graphs. Includes cross-fade blending, masked layers, normalized-time events, an optional code state machine, and a UI Toolkit debugger.",
+  "unity": "6000.0",
+  "license": "MIT",
+  "keywords": [
+    "animation",
+    "playables",
+    "animator",
+    "2d",
+    "3d",
+    "state-machine",
+    "ui-toolkit",
+    "unity-tool"
+  ],
+  "author": {
+    "name": "haruchanz64",
+    "url": "https://haruchanz64.github.io"
+  },
+  "samples": [
+    {
+      "displayName": "2D & 3D Quick Start",
+      "description": "Minimal 2D side-scroller and 3D layered animation examples using PlayablesAnimatorController without an AnimatorController.",
+      "path": "Samples~/QuickStart"
+    }
+  ]
+}
