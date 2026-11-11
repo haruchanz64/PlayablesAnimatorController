@@ -9,7 +9,7 @@ Code-driven 2D and 3D animation controller for Unity 6 built on the `Playables` 
 - **Masked and additive layers:** Configure `AnimLayerConfig` entries with `AvatarMask` assets and per-layer weights, or fade layers out with `StopLayer(layer, fadeOutDuration)`.
 - **Priority locks and normalized-time events:** Prevent lower-priority locomotion clips from interrupting higher-priority attacks or hitstun, and trigger callbacks at exact `[0..1]` normalized clip progress via `AnimClipEvent`.
 - **Optional code state machine (`AnimStateMachine`):** Register named states, prioritized `IAnimTransitionRule` predicates, any-state transitions, and automatic return states on clip completion.
-- **UI Toolkit inspection:** Includes `CustomAnimInspector` and `AnimDebuggerWindow` (`Tools > PlayablesAnimatorController > Animation Debugger`) displaying live per-layer progress bars, blend weights, clip history, and manual test playback.
+- **UI Toolkit inspection:** Includes `CustomAnimInspector` and `AnimDebuggerWindow` (`Tools > HaruChanZ64 > Animation > PlayablesAnimatorController > Animation Debugger`) displaying live per-layer progress bars, blend weights, clip history, and manual test playback.
 
 ## Installation
 

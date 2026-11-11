@@ -24,7 +24,7 @@ namespace PlayablesAnimatorController.Editor.UI
         private Slider _speedSlider;
         private int _selectedIndex;
 
-        [MenuItem("Tools/PlayablesAnimatorController/Animation Debugger", false, 10)]
+        [MenuItem("Tools/HaruChanZ64/Animation/PlayablesAnimatorController/Animation Debugger", false, 110)]
         public static void ShowWindow()
         {
             var window = GetWindow<AnimDebuggerWindow>("Anim Debugger");
