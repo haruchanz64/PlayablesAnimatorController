@@ -19,9 +19,19 @@ namespace PlayablesAnimatorController.Samples
         private CustomAnimController _anim;
         private AnimStateMachine _fsm;
 
+        /// <summary>
+        /// Current horizontal movement speed used by Idle/Run transition predicates (threshold 0.1).
+        /// </summary>
         public float HorizontalSpeed { get; set; }
+
+        /// <summary>
+        /// Whether the character is grounded; transitions to Jump when false.
+        /// </summary>
         public bool IsGrounded { get; set; } = true;
 
+        /// <summary>
+        /// Builds the layer-0 <see cref="AnimStateMachine"/> with Idle, Run, Jump, and auto-returning Attack states and enters Idle.
+        /// </summary>
         private void Awake()
         {
             _anim = GetComponent<CustomAnimController>();
@@ -46,6 +56,9 @@ namespace PlayablesAnimatorController.Samples
             _fsm.Tick();
         }
 
+        /// <summary>
+        /// Requests the priority-10 Attack state, which locks out lower-priority locomotion states and returns to Idle on completion.
+        /// </summary>
         public void TriggerAttack()
         {
             _fsm.TrySetState("Attack");

@@ -22,11 +22,18 @@ namespace PlayablesAnimatorController.Samples
             _anim = GetComponent<CustomAnimController>();
         }
 
+        /// <summary>
+        /// Cross-fades base layer 0 between the run and idle clips based on movement state.
+        /// </summary>
+        /// <param name="isMoving">True to play the run clip; false to play the idle clip.</param>
         public void UpdateLocomotion(bool isMoving)
         {
             _anim.Play(isMoving ? runClip : idleClip, fadeDuration: 0.15f, layer: 0);
         }
 
+        /// <summary>
+        /// Plays the upper-body slash clip on layer 1 with a hit-frame callback at 45% progress and fades layer 1 out on completion.
+        /// </summary>
         public void PlayUpperBodySlash()
         {
             var req = AnimPlayRequest.Create(

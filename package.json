@@ -1,6 +1,6 @@
 {
   "name": "com.haruchanz64.playables-animator-controller",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "PlayablesAnimatorController",
   "description": "Code-driven 2D and 3D animation controller for Unity 6 built on the Playables API without AnimatorController state graphs. Includes cross-fade blending, masked layers, normalized-time events, an optional code state machine, and a UI Toolkit debugger.",
   "unity": "6000.0",

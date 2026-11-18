@@ -15,6 +15,9 @@ namespace PlayablesAnimatorController.Components
     {
         private static readonly List<CustomAnimController> ActiveRegistry = new List<CustomAnimController>(16);
 
+        /// <summary>
+        /// Enabled <see cref="CustomAnimController"/> instances currently registered for runtime inspection and debugging.
+        /// </summary>
         public static IReadOnlyList<CustomAnimController> ActiveControllers => ActiveRegistry;
 
         [Header("Optional Configuration")]
@@ -29,18 +32,37 @@ namespace PlayablesAnimatorController.Components
         private PlayableAnimGraph _graph;
         private readonly List<string> _recentHistory = new List<string>(24);
 
+        /// <summary>
+        /// Cached <see cref="UnityEngine.Animator"/> component on this GameObject driven by the playable graph.
+        /// </summary>
         public Animator Animator => _animator;
+
+        /// <summary>
+        /// Optional <see cref="AnimSetAsset"/> used to resolve string keys passed to <see cref="PlayByKey"/>.
+        /// </summary>
         public AnimSetAsset AnimationSet
         {
             get => animationSet;
             set => animationSet = value;
         }
+
+        /// <inheritdoc/>
         public int LayerCount => _graph != null ? _graph.LayerCount : Mathf.Max(1, layers.Count);
+
+        /// <summary>
+        /// Rolling log of up to 24 recent clip start entries formatted as <c>[L&lt;layer&gt;] &lt;stateId&gt; (&lt;clipName&gt;)</c>.
+        /// </summary>
         public IReadOnlyList<string> RecentHistory => _recentHistory;
 
+        /// <inheritdoc/>
         public event Action<int, AnimationClip> OnClipCompleted;
+
+        /// <inheritdoc/>
         public event Action<int, string, AnimationClip> OnClipStarted;
 
+        /// <summary>
+        /// Clears the static controller registry on subsystem registration to support Enter Play Mode without domain reload.
+        /// </summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetRegistry()
         {
@@ -53,6 +75,9 @@ namespace PlayablesAnimatorController.Components
             InitializeGraph();
         }
 
+        /// <summary>
+        /// Registers this controller in <see cref="ActiveControllers"/>, ensures the playable graph is initialized, and triggers <c>initialKey</c> if configured.
+        /// </summary>
         private void OnEnable()
         {
             if (!ActiveRegistry.Contains(this))
@@ -87,6 +112,11 @@ namespace PlayablesAnimatorController.Components
             DisposeGraph();
         }
 
+        /// <summary>
+        /// Plays a clip request on the underlying <see cref="PlayableAnimGraph"/>, initializing the graph lazily if needed.
+        /// </summary>
+        /// <param name="request">Playback parameters including clip, fade duration, layer, speed, priority, and callbacks.</param>
+        /// <returns>True if the request was accepted; false if the graph could not initialize, the clip is null, or a higher-priority clip is active.</returns>
         public bool Play(in AnimPlayRequest request)
         {
             if (_graph == null || !_graph.IsValid)
@@ -97,6 +127,7 @@ namespace PlayablesAnimatorController.Components
             return _graph != null && _graph.Play(in request);
         }
 
+        /// <inheritdoc/>
         public bool Play(
             AnimationClip clip,
             float fadeDuration = 0.15f,
@@ -108,6 +139,14 @@ namespace PlayablesAnimatorController.Components
             return Play(in req);
         }
 
+        /// <summary>
+        /// Resolves <paramref name="key"/> in <see cref="AnimationSet"/> and plays its clip with optional fade and layer overrides.
+        /// Automatically chains <see cref="AnimClipEntry.nextKeyOnComplete"/> when set on a non-looping entry.
+        /// </summary>
+        /// <param name="key">Case-sensitive entry key in <see cref="AnimationSet"/>.</param>
+        /// <param name="fadeOverride">Optional cross-fade duration in seconds overriding the entry default.</param>
+        /// <param name="layerOverride">Optional zero-based layer index overriding the entry default.</param>
+        /// <returns>True if the key resolved to a clip and playback was accepted; otherwise false.</returns>
         public bool PlayByKey(string key, float? fadeOverride = null, int? layerOverride = null)
         {
             if (animationSet == null || !animationSet.TryGetEntry(key, out AnimClipEntry entry) || entry.clip == null)
@@ -130,26 +169,33 @@ namespace PlayablesAnimatorController.Components
             return Play(in req);
         }
 
+        /// <inheritdoc/>
         public void StopLayer(int layer, float fadeOutDuration = 0f)
         {
             _graph?.StopLayer(layer, fadeOutDuration);
         }
 
+        /// <inheritdoc/>
         public void SetLayerWeight(int layer, float weight)
         {
             _graph?.SetLayerWeight(layer, weight);
         }
 
+        /// <inheritdoc/>
         public void SetSpeed(float speed, int layer = 0)
         {
             _graph?.SetSpeed(speed, layer);
         }
 
+        /// <inheritdoc/>
         public AnimPlaybackState GetLayerState(int layer = 0)
         {
             return _graph != null ? _graph.GetLayerState(layer) : default;
         }
 
+        /// <summary>
+        /// Disposes any prior graph and creates a fresh <see cref="PlayableAnimGraph"/> bound to <see cref="_animator"/> using serialized layer configs.
+        /// </summary>
         private void InitializeGraph()
         {
             DisposeGraph();
@@ -161,6 +207,9 @@ namespace PlayablesAnimatorController.Components
             _graph.OnClipCompleted += HandleClipCompleted;
         }
 
+        /// <summary>
+        /// Unsubscribes graph callbacks and disposes the active <see cref="PlayableAnimGraph"/> if present.
+        /// </summary>
         private void DisposeGraph()
         {
             if (_graph == null) return;
@@ -170,6 +219,9 @@ namespace PlayablesAnimatorController.Components
             _graph = null;
         }
 
+        /// <summary>
+        /// Records a started clip in the bounded <see cref="_recentHistory"/> ring and forwards <see cref="OnClipStarted"/>.
+        /// </summary>
         private void HandleClipStarted(int layer, string stateId, AnimationClip clip)
         {
             string entry = $"[L{layer}] {stateId} ({clip?.name})";
@@ -182,6 +234,9 @@ namespace PlayablesAnimatorController.Components
             OnClipStarted?.Invoke(layer, stateId, clip);
         }
 
+        /// <summary>
+        /// Forwards clip completion notifications from the underlying graph to <see cref="OnClipCompleted"/>.
+        /// </summary>
         private void HandleClipCompleted(int layer, AnimationClip clip)
         {
             OnClipCompleted?.Invoke(layer, clip);

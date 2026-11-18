@@ -24,6 +24,9 @@ namespace PlayablesAnimatorController.Editor.UI
         private Slider _speedSlider;
         private int _selectedIndex;
 
+        /// <summary>
+        /// Opens or focuses the live Animation Debugger window from the Unity Tools menu.
+        /// </summary>
         [MenuItem("Tools/HaruChanZ64/Animation/PlayablesAnimatorController/Animation Debugger", false, 110)]
         public static void ShowWindow()
         {
@@ -32,6 +35,9 @@ namespace PlayablesAnimatorController.Editor.UI
             window.Show();
         }
 
+        /// <summary>
+        /// Constructs the UI Toolkit debugger layout with controller selection, live layer readouts, manual playback controls, and clip history.
+        /// </summary>
         public void CreateGUI()
         {
             rootVisualElement.Clear();
@@ -104,6 +110,9 @@ namespace PlayablesAnimatorController.Editor.UI
             RefreshView();
         }
 
+        /// <summary>
+        /// Returns the currently selected active <see cref="CustomAnimController"/>, or null when no controllers are registered.
+        /// </summary>
         private CustomAnimController GetSelectedController()
         {
             var active = CustomAnimController.ActiveControllers;
@@ -112,6 +121,9 @@ namespace PlayablesAnimatorController.Editor.UI
             return active[_selectedIndex];
         }
 
+        /// <summary>
+        /// Plays the manually assigned test clip on the selected controller with priority override enabled.
+        /// </summary>
         private void PlayTestClip()
         {
             var ctrl = GetSelectedController();
@@ -128,6 +140,9 @@ namespace PlayablesAnimatorController.Editor.UI
             ctrl.Play(in req);
         }
 
+        /// <summary>
+        /// Polls <see cref="CustomAnimController.ActiveControllers"/> and redraws the controller selector, per-layer progress bars, and recent clip history.
+        /// </summary>
         private void RefreshView()
         {
             if (_controllerDropdown == null) return;
@@ -190,6 +205,9 @@ namespace PlayablesAnimatorController.Editor.UI
             }
         }
 
+        /// <summary>
+        /// Creates a styled section heading label using the <c>cah-section-title</c> USS class.
+        /// </summary>
         private static Label MakeTitle(string text)
         {
             var l = new Label(text);

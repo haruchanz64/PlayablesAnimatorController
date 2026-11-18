@@ -48,12 +48,33 @@ namespace PlayablesAnimatorController.Core
         private bool _disposed;
         private bool _manualMode;
 
+        /// <summary>
+        /// True when this instance has not been disposed and its underlying <see cref="PlayableGraph"/> is valid.
+        /// </summary>
         public bool IsValid => !_disposed && _graph.IsValid();
+
+        /// <summary>
+        /// Number of animation layers currently allocated in the layer mixer.
+        /// </summary>
         public int LayerCount => _layers.Count;
 
+        /// <summary>
+        /// Raised when a non-looping clip reaches its duration, passing the layer index and completed clip.
+        /// </summary>
         public event Action<int, AnimationClip> OnClipCompleted;
+
+        /// <summary>
+        /// Raised when a clip begins playing on a layer, passing the layer index, resolved state ID, and started clip.
+        /// </summary>
         public event Action<int, string, AnimationClip> OnClipStarted;
 
+        /// <summary>
+        /// Creates and starts a <see cref="PlayableGraph"/> targeting <paramref name="animator"/> with at least one mixer layer.
+        /// </summary>
+        /// <param name="animator">Target <see cref="Animator"/> receiving playable output; must not be null.</param>
+        /// <param name="graphName">Display name shown in Unity's PlayableGraph Visualizer.</param>
+        /// <param name="layerConfigs">Optional per-layer weights, avatar masks, and additive flags; defaults to a single base layer at weight 1.</param>
+        /// <param name="manualUpdateMode">When true, uses <see cref="DirectorUpdateMode.Manual"/> so <see cref="Tick"/> drives graph evaluation deterministically.</param>
         public PlayableAnimGraph(
             Animator animator,
             string graphName = "PlayablesAnimatorController",
@@ -80,6 +101,12 @@ namespace PlayablesAnimatorController.Core
             _graph.Play();
         }
 
+        /// <summary>
+        /// Starts or cross-fades a clip on the requested layer, expanding the layer mixer if needed.
+        /// Restores layer weight to 1 when playing onto a muted layer and cancels any active layer fade-out.
+        /// </summary>
+        /// <param name="request">Playback specification including clip, fade duration, speed, priority, and callbacks.</param>
+        /// <returns>True if playback started or updated speed on the same clip; false if the graph is invalid, clip is null, or a higher-priority clip is active.</returns>
         public bool Play(in AnimPlayRequest request)
         {
             if (!IsValid || request.Clip == null) return false;
@@ -186,6 +213,12 @@ namespace PlayablesAnimatorController.Core
             return true;
         }
 
+        /// <summary>
+        /// Stops playback on <paramref name="layerIndex"/>, immediately clearing its playables or fading the layer weight to 0 over <paramref name="fadeOutDuration"/>.
+        /// Overlay layers (index greater than 0) have their weight reset to 0 on immediate stop.
+        /// </summary>
+        /// <param name="layerIndex">Zero-based layer index to stop.</param>
+        /// <param name="fadeOutDuration">Fade-out duration in seconds; values at or below 0.0001 stop immediately.</param>
         public void StopLayer(int layerIndex, float fadeOutDuration = 0f)
         {
             if (!IsValid || layerIndex < 0 || layerIndex >= _layers.Count) return;
@@ -207,6 +240,11 @@ namespace PlayablesAnimatorController.Core
             }
         }
 
+        /// <summary>
+        /// Sets the blend weight for <paramref name="layerIndex"/> on the underlying <see cref="AnimationLayerMixerPlayable"/>.
+        /// </summary>
+        /// <param name="layerIndex">Zero-based layer index.</param>
+        /// <param name="weight">Target layer weight, clamped to [0, 1].</param>
         public void SetLayerWeight(int layerIndex, float weight)
         {
             if (!IsValid || layerIndex < 0 || layerIndex >= _layers.Count) return;
@@ -215,6 +253,11 @@ namespace PlayablesAnimatorController.Core
             _layerMixer.SetInputWeight(layerIndex, clamped);
         }
 
+        /// <summary>
+        /// Updates the playback speed multiplier for the currently active clip on <paramref name="layerIndex"/>.
+        /// </summary>
+        /// <param name="speed">Playback speed multiplier.</param>
+        /// <param name="layerIndex">Zero-based layer index.</param>
         public void SetSpeed(float speed, int layerIndex = 0)
         {
             if (!IsValid || layerIndex < 0 || layerIndex >= _layers.Count) return;
@@ -226,6 +269,11 @@ namespace PlayablesAnimatorController.Core
             }
         }
 
+        /// <summary>
+        /// Advances cross-fade weights, layer fade-outs, normalized-time clip events, and completion callbacks across all layers.
+        /// Evaluates the underlying <see cref="PlayableGraph"/> directly when constructed in manual update mode.
+        /// </summary>
+        /// <param name="deltaTime">Elapsed step time in seconds; negative values are clamped to 0.</param>
         public void Tick(float deltaTime)
         {
             if (!IsValid) return;
@@ -242,6 +290,11 @@ namespace PlayablesAnimatorController.Core
             }
         }
 
+        /// <summary>
+        /// Captures an <see cref="AnimPlaybackState"/> snapshot for <paramref name="layerIndex"/>.
+        /// </summary>
+        /// <param name="layerIndex">Zero-based layer index.</param>
+        /// <returns>Current playback metrics for the layer, or default if the graph is invalid or the index is out of range.</returns>
         public AnimPlaybackState GetLayerState(int layerIndex = 0)
         {
             if (!IsValid || layerIndex < 0 || layerIndex >= _layers.Count)
@@ -287,6 +340,9 @@ namespace PlayablesAnimatorController.Core
             };
         }
 
+        /// <summary>
+        /// Steps layer fade-out, cross-fade blending, normalized-time event dispatch, and non-looping completion detection for a single layer.
+        /// </summary>
         private void TickLayer(LayerSlot slot, float dt)
         {
             if (slot.FadingOutLayer)
@@ -330,6 +386,7 @@ namespace PlayablesAnimatorController.Core
                 float currNorm = Mathf.Repeat(time / length, 1f);
                 if (loops > slot.LoopCount)
                 {
+                    // Fire tail events before loop wrap, reset fired flags, then fire head events of the new cycle
                     FireClipEventsInRange(slot, slot.PrevNormalized, 1f);
                     ResetFiredEvents(slot);
                     slot.LoopCount = loops;
@@ -359,6 +416,9 @@ namespace PlayablesAnimatorController.Core
             }
         }
 
+        /// <summary>
+        /// Invokes any unfired <see cref="AnimClipEvent"/> whose normalized marker falls within [<paramref name="prevNorm"/>, <paramref name="currNorm"/>].
+        /// </summary>
         private static void FireClipEventsInRange(LayerSlot slot, float prevNorm, float currNorm)
         {
             if (slot.Events == null || slot.FiredEvents == null) return;
@@ -374,12 +434,18 @@ namespace PlayablesAnimatorController.Core
             }
         }
 
+        /// <summary>
+        /// Clears per-event fired flags so normalized events can trigger again on the next loop cycle.
+        /// </summary>
         private static void ResetFiredEvents(LayerSlot slot)
         {
             if (slot.FiredEvents == null) return;
             Array.Clear(slot.FiredEvents, 0, slot.FiredEvents.Length);
         }
 
+        /// <summary>
+        /// Expands <see cref="_layerMixer"/> and creates default layer slots when a request targets a higher layer index.
+        /// </summary>
         private void EnsureLayerCapacity(int requiredCount)
         {
             if (requiredCount <= _layers.Count) return;
@@ -390,6 +456,9 @@ namespace PlayablesAnimatorController.Core
             }
         }
 
+        /// <summary>
+        /// Allocates a 2-input <see cref="AnimationMixerPlayable"/> for a layer, connects it to <see cref="_layerMixer"/>, and applies optional mask and additive flags.
+        /// </summary>
         private void CreateLayerInternal(int index, AnimLayerConfig cfg)
         {
             var mixer = AnimationMixerPlayable.Create(_graph, 2);
@@ -415,6 +484,9 @@ namespace PlayablesAnimatorController.Core
             });
         }
 
+        /// <summary>
+        /// Destroys active and outgoing playables on <paramref name="slot"/> and resets its playback, blend, priority, and callback state.
+        /// </summary>
         private void ClearLayerPlayback(LayerSlot slot)
         {
             DestroyActivePlayable(slot);
@@ -427,6 +499,9 @@ namespace PlayablesAnimatorController.Core
             slot.OnComplete = null;
         }
 
+        /// <summary>
+        /// Disconnects and destroys the active clip playable bound to mixer port 0 on <paramref name="slot"/>.
+        /// </summary>
         private void DestroyActivePlayable(LayerSlot slot)
         {
             if (slot.ActivePlayable.IsValid())
@@ -438,6 +513,9 @@ namespace PlayablesAnimatorController.Core
             slot.ActiveClip = null;
         }
 
+        /// <summary>
+        /// Disconnects and destroys the outgoing cross-fade clip playable bound to mixer port 1 on <paramref name="slot"/>.
+        /// </summary>
         private void DestroyPreviousPlayable(LayerSlot slot)
         {
             if (slot.PreviousPlayable.IsValid())
@@ -449,6 +527,9 @@ namespace PlayablesAnimatorController.Core
             slot.PreviousClip = null;
         }
 
+        /// <summary>
+        /// Destroys the underlying <see cref="PlayableGraph"/> and clears layer slots. Safe to call multiple times.
+        /// </summary>
         public void Dispose()
         {
             if (_disposed) return;

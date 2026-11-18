@@ -8,11 +8,19 @@ using UnityEngine.UIElements;
 
 namespace PlayablesAnimatorController.Editor.Inspectors
 {
+    /// <summary>
+    /// UI Toolkit custom inspector for <see cref="CustomAnimController"/> displaying default serialized fields
+    /// alongside a live Play Mode status panel of active layers, cross-fade blends, and progress bars.
+    /// </summary>
     [CustomEditor(typeof(CustomAnimController))]
     public sealed class CustomAnimInspector : UnityEditor.Editor
     {
         private VisualElement _layersContainer;
 
+        /// <summary>
+        /// Builds the UI Toolkit inspector hierarchy and schedules a 100 ms refresh loop for live playback telemetry.
+        /// </summary>
+        /// <returns>The root <see cref="VisualElement"/> for the inspector.</returns>
         public override VisualElement CreateInspectorGUI()
         {
             var root = new VisualElement();
@@ -41,6 +49,9 @@ namespace PlayablesAnimatorController.Editor.Inspectors
             return root;
         }
 
+        /// <summary>
+        /// Rebuilds the per-layer readout and normalized progress bars from the inspected <see cref="CustomAnimController"/> during Play Mode.
+        /// </summary>
         private void RefreshLayers()
         {
             if (target == null || _layersContainer == null) return;
@@ -79,6 +90,10 @@ namespace PlayablesAnimatorController.Editor.Inspectors
             }
         }
 
+        /// <summary>
+        /// Loads <c>CustomAnimStyles.uss</c> from the package path (falling back to an AssetDatabase search) and attaches it to <paramref name="target"/>.
+        /// </summary>
+        /// <param name="target">Visual element receiving the stylesheet.</param>
         internal static void AttachStyles(VisualElement target)
         {
             const string pkgPath = "Packages/com.haruchanz64.playables-animator-controller/Editor/UI/CustomAnimStyles.uss";

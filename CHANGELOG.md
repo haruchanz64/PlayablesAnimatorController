@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.1] - 2026-11-18
+### Documentation
+- Expanded `README.md` into a full developer guide covering requirements, UPM and local installation, Playables graph architecture, code examples (including custom `IAnimTransitionRule` and manual graph stepping), API contract table, samples, EditMode tests, and runtime caveats.
+- Added XML documentation comments across all public types, members, and non-trivial helpers in `Runtime/`, `Editor/`, and `Samples~/`.
+
 ## [1.0.0] - 2025-12-12
 ### Added
 - `PlayableAnimGraph` pure C# wrapper around `PlayableGraph`, `AnimationLayerMixerPlayable`, and per-layer `AnimationMixerPlayable` cross-fade slots.
